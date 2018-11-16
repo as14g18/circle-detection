@@ -6,7 +6,10 @@ import javafx.scene.paint.Color;
 
 public class PixelModifier {
 	private WritableImage image;
-	private final int THRESHOLD = 500;
+	private final int THETA_INCREMENT = 10; // Minimum 1. Higher value = more accurate hough transform
+	private final int GREYSCALE_THRESHOLD = 50;
+	private final int VOTING_THRESHOLD = 20;
+	// 40 --> 9 max
 	
 	public PixelModifier(WritableImage image) {
 		this.image = image;
@@ -64,16 +67,6 @@ public class PixelModifier {
                 }
                 
                 edgeColors[readX][readY] = g;
-                
-                
-                
-                /*
-                if (g < THRESHOLD) {
-                	pixelWriter.setColor(readX, readY, Color.WHITE);
-                } else {
-                	pixelWriter.setColor(readX, readY, Color.BLACK);
-                }
-                */
             }
         }
 		
@@ -84,11 +77,57 @@ public class PixelModifier {
             for (int readX = 1; readX < image.getWidth() - 1; readX++) {
                 int g = edgeColors[readX][readY];
                 g = (int)(g * scale);
-                // g = 0xff000000 | (g << 16) | (g << 8) | g;
 
                 pixelWriter.setColor(readX, readY, Color.rgb(g, g, g));
             }
         }
 	}
-
+	
+	public void doHoughTransform() {
+		PixelReader pixelReader = image.getPixelReader();
+		int maxRadius = (int) (Math.min(image.getHeight(), image.getWidth())) / 2;
+		int voting[][][] = new int[(int) (image.getHeight() - 1)][(int) (image.getWidth() - 1)][maxRadius];
+		
+		for (int readY = 1; readY < image.getHeight() - 1; readY++) {
+			System.out.println("Hough transform: " + readY + "/" + ((int) image.getHeight() - 1));
+            for (int readX = 1; readX < image.getWidth() - 1; readX++) {
+            	if ((int) (pixelReader.getColor(readX, readY).getRed() * 255) > GREYSCALE_THRESHOLD) {
+	            	for (int radius = 1; radius < maxRadius; radius++) {
+	            		for (int theta = 0; theta < 360; theta+=THETA_INCREMENT) {
+	            			int a = (int) (readX - radius * Math.cos(theta * Math.PI / 180));
+	            			int b = (int) (readY - radius * Math.sin(theta * Math.PI / 180));	
+	            			
+	            			if (b < image.getHeight() - 1 && a < image.getWidth() - 1 && b >= 0 && a >= 0) {
+	            				// System.out.println((int) (pixelReader.getColor(a, b).getRed() * 255));
+	            				voting[a][b][radius] += 1;
+	            			}
+	            		}
+	        		}
+	            }
+            }
+		}
+		
+		
+		PixelWriter pixelWriter = image.getPixelWriter();
+		for (int readY = 1; readY < image.getHeight() - 1; readY++) {
+			System.out.println("Drawing circle: " + readY + "/" + ((int) image.getHeight() - 1));
+            for (int readX = 1; readX < image.getWidth() - 1; readX++) {
+            	for (int radius = 1; radius < maxRadius; radius++) {
+            		if (voting[readX][readY][radius] > 1) {
+            			// System.out.println(voting[readX][readY][radius]);
+            		}
+            		if (voting[readX][readY][radius] > VOTING_THRESHOLD) {
+                		for (int theta = 0; theta < 360; theta+=THETA_INCREMENT) {
+                			int a = (int) (readX - radius * Math.cos(theta * Math.PI / 180));
+                			int b = (int) (readY - radius * Math.sin(theta * Math.PI / 180));
+                			
+                			if (b < image.getHeight() - 1 && a < image.getWidth() - 1 && b >= 0 && a >= 0) {
+                				pixelWriter.setColor(a, b, Color.LIGHTGREEN);
+                			}
+                		}
+            		}
+            	}
+            }
+		}
+	}
 }

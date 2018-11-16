@@ -37,11 +37,14 @@ public class UserInterface extends Application {
 		WritableImage wImage = new WritableImage(image.getPixelReader(), (int) image.getWidth(), (int) image.getHeight());
 		
 		PixelModifier pixelMod = new PixelModifier(wImage);
-		// convert image to greyscale
+
+		// Perform steps for circle detection
 		pixelMod.convertToGreyscale();
-		
-		// apply sobel operator
+		System.out.println("[CONVERTED TO GREYSCALE]");
 		pixelMod.doSobelOperator();
+		System.out.println("[APPLIED SOBEL OPERATOR]");
+		pixelMod.doHoughTransform();
+		System.out.println("[APPLIED HOUGH TRANSFORM]");
 		
 		
 		this.window = primaryStage;
