@@ -26,10 +26,10 @@ public class UserInterface extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		Image image = new Image(
-                "http://blog.hellonico.info/detect/circles.jpg",
+                "file:///C:/Users/Akhilesh/Desktop/Capture.PNG",
                 200,
-                0,
-                true,
+                200,
+                false,
                 true
         );
 		
@@ -39,12 +39,10 @@ public class UserInterface extends Application {
 		PixelModifier pixelMod = new PixelModifier(wImage);
 
 		// Perform steps for circle detection
-		pixelMod.convertToGreyscale();
-		System.out.println("[CONVERTED TO GREYSCALE]");
-		pixelMod.doSobelOperator();
-		System.out.println("[APPLIED SOBEL OPERATOR]");
-		pixelMod.doHoughTransform();
-		System.out.println("[APPLIED HOUGH TRANSFORM]");
+		pixelMod.convertToGreyscale(); System.out.println("[CONVERTED TO GREYSCALE]");
+		pixelMod.doSobelOperator(); System.out.println("[APPLIED SOBEL OPERATOR]");
+		pixelMod.doHoughTransform(); System.out.println("[APPLIED HOUGH TRANSFORM]");
+		
 		
 		
 		this.window = primaryStage;

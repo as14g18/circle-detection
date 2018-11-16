@@ -6,9 +6,10 @@ import javafx.scene.paint.Color;
 
 public class PixelModifier {
 	private WritableImage image;
-	private final int THETA_INCREMENT = 10; // Minimum 1. Higher value = more accurate hough transform
+	private final int THETA_INCREMENT = 2; // Minimum 1. Higher value = more accurate hough transform
 	private final int GREYSCALE_THRESHOLD = 50;
-	private final int VOTING_THRESHOLD = 20;
+	private final int VOTING_THRESHOLD = 116;
+	private final int MINIMUM_CIRCLE_RADIUS = 10;
 	// 40 --> 9 max
 	
 	public PixelModifier(WritableImage image) {
@@ -85,14 +86,14 @@ public class PixelModifier {
 	
 	public void doHoughTransform() {
 		PixelReader pixelReader = image.getPixelReader();
-		int maxRadius = (int) (Math.min(image.getHeight(), image.getWidth())) / 2;
+		int maxRadius = (int) (Math.min(image.getHeight(), image.getWidth()));
 		int voting[][][] = new int[(int) (image.getHeight() - 1)][(int) (image.getWidth() - 1)][maxRadius];
 		
 		for (int readY = 1; readY < image.getHeight() - 1; readY++) {
 			System.out.println("Hough transform: " + readY + "/" + ((int) image.getHeight() - 1));
             for (int readX = 1; readX < image.getWidth() - 1; readX++) {
             	if ((int) (pixelReader.getColor(readX, readY).getRed() * 255) > GREYSCALE_THRESHOLD) {
-	            	for (int radius = 1; radius < maxRadius; radius++) {
+	            	for (int radius = MINIMUM_CIRCLE_RADIUS; radius < maxRadius; radius++) {
 	            		for (int theta = 0; theta < 360; theta+=THETA_INCREMENT) {
 	            			int a = (int) (readX - radius * Math.cos(theta * Math.PI / 180));
 	            			int b = (int) (readY - radius * Math.sin(theta * Math.PI / 180));	
@@ -107,17 +108,20 @@ public class PixelModifier {
             }
 		}
 		
-		
+		int maxVote = 0;
 		PixelWriter pixelWriter = image.getPixelWriter();
 		for (int readY = 1; readY < image.getHeight() - 1; readY++) {
 			System.out.println("Drawing circle: " + readY + "/" + ((int) image.getHeight() - 1));
             for (int readX = 1; readX < image.getWidth() - 1; readX++) {
-            	for (int radius = 1; radius < maxRadius; radius++) {
+            	for (int radius = MINIMUM_CIRCLE_RADIUS; radius < maxRadius; radius++) {
             		if (voting[readX][readY][radius] > 1) {
             			// System.out.println(voting[readX][readY][radius]);
             		}
             		if (voting[readX][readY][radius] > VOTING_THRESHOLD) {
-                		for (int theta = 0; theta < 360; theta+=THETA_INCREMENT) {
+            			if (voting[readX][readY][radius] > maxVote) {
+            				maxVote = voting[readX][readY][radius];
+            			}
+                		for (int theta = 0; theta < 360; theta+=1) {
                 			int a = (int) (readX - radius * Math.cos(theta * Math.PI / 180));
                 			int b = (int) (readY - radius * Math.sin(theta * Math.PI / 180));
                 			
@@ -129,5 +133,7 @@ public class PixelModifier {
             	}
             }
 		}
+		
+		System.out.println("MAX VOTE: " + maxVote);
 	}
 }
